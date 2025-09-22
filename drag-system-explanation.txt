@@ -1,0 +1,222 @@
+🎯 VİDEO EDİTÖR - KESME SÜRÜKLEME SİSTEMİ
+=======================================
+
+📐 SİSTEMİN TEMEL YAPISI
+------------------------
+
+1. DRAG STATE (Sürükleme Durumu):
+   let dragging = null;                    // 'start', 'end' veya null
+   let dragState = { 
+     lastUpdate: 0,                        // Son güncelleme zamanı
+     animFrame: null                       // Animation frame ID'si
+   };
+
+2. ZOOM TABANLI PRECİSİON (Hassasiyet):
+   function dragStep() {
+     const pps = pxPerSec();               // Pixel per second
+     if (pps >= 1000) return 0.01;        // 10ms precision (çok yakın zoom)
+     if (pps >= 500) return 0.05;         // 50ms precision
+     if (pps >= 200) return 0.1;          // 100ms precision
+     if (pps >= 100) return 0.2;          // 200ms precision
+     return 0.5;                          // 500ms precision (uzak zoom)
+   }
+
+🖱️ MOUSE DOWN EVENTİ (Sürükleme Başlangıcı)
+-------------------------------------------
+
+1. BAŞLANGIÇ KURULUMU:
+   - scrubbing = true (sürükleme moduna geç)
+   - wasPlaying = !active().paused (oynatma durumunu kaydet)
+   - vA.pause(); vB.pause() (videoları durdur)
+
+2. VİZUAL DURUM DEĞİŞİKLİĞİ:
+   - tl.classList.add('dragging') (timeline'a dragging sınıfı ekle)
+   - document.body.style.cursor = 'ew-resize' (imleci değiştir)
+   - document.body.style.userSelect = 'none' (metin seçimini engelle)
+
+3. HANDLE SEÇİMİ (Hangi tutamak sürükleniyor):
+   const pick = () => {
+     const x = e.clientX - rect.left;
+     if(e.target === hStart || e.target.closest('#hStart')) return 'start';
+     if(e.target === hEnd || e.target.closest('#hEnd')) return 'end';
+     // En yakın handle'ı bul
+     const sX = hStart.getBoundingClientRect().left - rect.left;
+     const eX = hEnd.getBoundingClientRect().left - rect.left;
+     return (Math.abs(x - sX) < Math.abs(x - eX)) ? 'start' : 'end';
+   };
+
+🎯 SMOOTH DRAG FUNCTION (Pürüzsüz Sürükleme)
+--------------------------------------------
+
+const setByX = (xpx) => {
+  // 1. FPS LİMİTİ (120 FPS'e sınırla):
+  const now = performance.now();
+  if (now - dragState.lastUpdate < 8) return;
+  dragState.lastUpdate = now;
+  
+  // 2. HAM POZİSYON HESAPLA:
+  let rawEff = xToEff(xpx);  // Pixel'i zaman değerine çevir
+  
+  // 3. ZOOM TABANLI PRECİSİON UYGULA:
+  const step = dragStep();
+  const precision = Math.min(step, 0.001); // En az 1ms hassasiyet
+  const smoothedEff = Math.round(rawEff / precision) * precision;
+  
+  // 4. MİNİMUM SEÇİM ARALIĞI:
+  const minSelection = Math.max(0.01, effSpan() * 0.005); // %0.5 veya 10ms
+  
+  // 5. POZİSYON GÜNCELLEME:
+  if (dragging === 'start') {
+    selEffStart = clamp(smoothedEff, viewStart, selEffEnd - minSelection);
+    previewAtEff(selEffStart);  // Canlı önizleme
+  } else {
+    selEffEnd = clamp(smoothedEff, selEffStart + minSelection, viewEnd);
+    previewAtEff(selEffEnd);    // Canlı önizleme
+  }
+  
+  // 6. UI GÜNCELLEMESI (Animation Frame ile):
+  if (dragState.animFrame) {
+    cancelAnimationFrame(dragState.animFrame);
+  }
+  dragState.animFrame = requestAnimationFrame(() => {
+    placeHandles();  // Handle pozisyonlarını güncelle
+  });
+};
+
+📍 POZİSYON HESAPLAMA SİSTEMİ
+-----------------------------
+
+1. PIXEL ↔ ZAMAN DÖNÜŞÜMÜ:
+   function innerW() { return tl.clientWidth - 16; }  // İç genişlik
+   function effToX(e) { 
+     return 8 + ((e - viewStart) / effSpan()) * innerW(); 
+   }
+   function xToEff(x) { 
+     return clamp(viewStart + ((x-8)/innerW()) * effSpan(), 0, effDuration()); 
+   }
+
+2. HANDLE POZİSYONLAMA:
+   function placeHandles() {
+     const sX = effToX(selEffStart);       // Başlangıç X pozisyonu
+     const eX = effToX(selEffEnd);         // Bitiş X pozisyonu
+     const pct = v => (v / tl.clientWidth * 100) + '%';
+     
+     hStart.style.left = pct(sX);          // Başlangıç handle
+     hEnd.style.left = pct(eX);            // Bitiş handle
+     cutZone.style.left = pct(sX);         // Kesim bölgesi başlangıcı
+     cutZone.style.right = pct(tl.clientWidth - eX);  // Kesim bölgesi bitişi
+   }
+
+🎬 CANLI ÖNİZLEME SİSTEMİ
+-------------------------
+
+function previewAtEff(eff) {
+  const real = effToReal(eff);             // Efektif zamanı gerçek zamana çevir
+  const A = active(), B = standby();       // Aktif ve bekleyen video katmanları
+  
+  try { A.currentTime = real; } catch {}   // Ana video zamanını ayarla
+  
+  // Sonraki kesim varsa standby video'yu ayarla:
+  const nxt = nextCutAfter(real);
+  const standbyTarget = nxt ? Math.max(nxt.e, real + (nxt.e - nxt.s)) : real;
+  try { B.currentTime = standbyTarget; } catch {}
+  
+  // UI güncellemeleri:
+  isSeeking = true;
+  seek.max = effDuration().toFixed(3);
+  seek.value = clamp(eff, 0, effDuration()).toFixed(3);
+  tCur.textContent = fmtSmart(eff);
+}
+
+🖱️ MOUSE MOVE & UP EVENTLERİ
+-----------------------------
+
+1. MOUSE MOVE:
+   const onMove = (ev) => {
+     ev.preventDefault();
+     setByX(ev.clientX - rect.left);       // Yeni pozisyonu hesapla
+   };
+
+2. MOUSE UP (Sürükleme Bitişi):
+   const onUp = () => {
+     // Event listener'ları kaldır:
+     window.removeEventListener('mousemove', onMove);
+     window.removeEventListener('mouseup', onUp);
+     
+     // Görsel durumu temizle:
+     tl.classList.remove('dragging');
+     document.body.style.cursor = '';
+     document.body.style.userSelect = '';
+     
+     // Animation frame'i temizle:
+     if (dragState.animFrame) {
+       cancelAnimationFrame(dragState.animFrame);
+       dragState.animFrame = null;
+     }
+     
+     // Final precision ayarlaması:
+     const finalStep = dragStep();
+     if (dragging === 'start') {
+       selEffStart = Math.round(selEffStart / finalStep) * finalStep;
+     } else {
+       selEffEnd = Math.round(selEffEnd / finalStep) * finalStep;
+     }
+     
+     // Durumu sıfırla:
+     dragging = null;
+     scrubbing = false;
+     isSeeking = false;
+     
+     placeHandles(); // Final pozisyon güncellemesi
+     
+     // Oynatmaya devam et (eğer önceden oynatılıyorsa):
+     if (wasPlaying) {
+       active().play();
+       standby().play();
+     }
+   };
+
+🎮 TOUCH SUPPORT (Mobil Destek)
+-------------------------------
+
+1. TOUCH START:
+   tl.addEventListener('touchstart', (e) => {
+     if (e.touches.length !== 1) return;
+     e.preventDefault();
+     
+     // Touch event'i mouse event'e dönüştür:
+     const touch = e.touches[0];
+     const mouseEvent = new MouseEvent('mousedown', {
+       clientX: touch.clientX,
+       clientY: touch.clientY,
+       bubbles: true
+     });
+     
+     const element = document.elementFromPoint(touch.clientX, touch.clientY);
+     if (element) {
+       mouseEvent.target = element;
+       tl.dispatchEvent(mouseEvent);
+     }
+   }, { passive: false });
+
+2. TOUCH MOVE & END:
+   - Touch event'leri mouse event'lerine dönüştürülür
+   - Aynı sürükleme mantığı kullanılır
+
+🔧 PERFORMAns OPTİMİZASYONLARI
+------------------------------
+
+1. FPS LİMİTİ: 120 FPS (8ms interval)
+2. ANIMATION FRAME: requestAnimationFrame ile pürüzsüz animasyon
+3. PRECISION CONTROL: Zoom seviyesine göre hassasiyet ayarı
+4. DEBOUNCING: Çok hızlı güncellemeleri engelle
+5. CLAMP FUNCTION: Değerleri sınırlar içinde tut
+
+Bu sistem sayesinde:
+- Pixel-perfect hassasiyet
+- Pürüzsüz sürükleme deneyimi  
+- Zoom seviyesine göre adaptive precision
+- Canlı video önizlemesi
+- Touch cihaz desteği
+sağlanır!
+

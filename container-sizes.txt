@@ -1,0 +1,151 @@
+📏 VIDEO EDITOR UYGULAMASI - TÜM CONTAINER BOYUTLARI
+=======================================================
+
+🎯 ANA CONTAINER (VideoEditor)
+------------------------------
+minWidth: '900px'
+maxWidth: '1400px' 
+width: 'w-full' (100%)
+margin: 'mx-auto' (ortada)
+padding: 'px-4' (16px yatay)
+overflowX: 'auto' (yatay kaydırma)
+
+📺 VIDEO CONTAINER (.video-container)
+-------------------------------------
+width: 100%
+aspect-ratio: 16/9
+min-height: 250px
+max-height: 350px
+
+/* Responsive breakpoints */
+@media (max-width: 1200px):
+  min-height: 220px
+  max-height: 320px
+
+@media (max-width: 900px):
+  min-height: 180px
+  max-height: 280px
+
+🎬 TIMELINE CONTAINER (.timeline)
+---------------------------------
+height: 76px
+width: 100% (full width)
+border-radius: 10px
+margin-top: 6px
+overflow: visible
+
+🎥 PLAYER VE CUTS CONTAINER
+---------------------------
+Parent div:
+  display: flex flex-row
+  gap: 16px (gap-4)
+  minWidth: '800px'
+
+Player Container:
+  flex: 2 (60% genişlik)
+  minWidth: '400px'
+  width: '60%'
+  maxWidth: '500px'
+
+Cuts List Container:
+  flex: 1 (40% genişlik)  
+  minWidth: '280px'
+  width: '40%'
+  maxWidth: '350px'
+
+🎛️ PANEL CONTAINER (.panel)
+----------------------------
+background: var(--panel) (#0e1117)
+border: 1px solid var(--bd) (#223)
+border-radius: 12px
+padding: 12px
+
+/* Timeline panel özel padding */
+.panel:has(.timeline):
+  padding: 12px 12px 16px 12px
+
+🎮 CONTROL ELEMENTS
+-------------------
+Button (.btn):
+  padding: 8px 12px
+  border-radius: 8px
+  border: 1px solid #2a3244
+  background: #131b28
+
+Pill (.pill):
+  padding: 6px 10px
+  border-radius: 999px
+  background: #101826
+  border: 1px solid #1b2230
+
+Range Input:
+  flex: 1
+  min-width: 240px
+  height: 6px
+  border-radius: 4px
+  background: #1a2333
+
+Handle (.handle):
+  width: 12px
+  height: 30px
+  border-radius: 3px
+  background: #0f2a49
+  border: 1px solid #2a4e7a
+
+Label (.label):
+  font: 11px/1.2 ui-monospace
+  background: rgba(8, 17, 30, 0.95)
+  padding: 3px 8px
+  border: 1px solid #132033
+  border-radius: 6px
+
+📱 RESPONSIVE DAVRANIŞLAR
+-------------------------
+Büyük Ekranlar (>1400px):
+- Ana container max 1400px genişlik
+- Video max 350px yükseklik
+- Player-Cuts yan yana optimal görünüm
+
+Orta Ekranlar (900px-1200px):
+- Video 220px-320px yükseklik arası
+- Player-Cuts yan yana devam eder
+- Ana container responsive olarak küçülür
+
+Küçük Ekranlar (<900px):
+- Video 180px-280px yükseklik
+- Yatay kaydırma devreye girer
+- Minimum 900px genişlik korunur
+
+🎯 ÖNEMLİ NOTLAR
+----------------
+1. Minimum Genişlik: 900px (daha küçük ekranlarda yatay kaydırma)
+2. Maksimum Genişlik: 1400px (çok büyük ekranlarda ortalanır)
+3. Video Oranı: Sabit 16:9 aspect ratio
+4. Flexbox Dağılımı: Player %60, Cuts %40
+5. Timeline: Her zaman full width
+6. Tüm boyutlar responsive tasarım prensipleriyle optimize edilmiş
+
+🔧 CSS VARIABLES
+----------------
+--bg: #0b0d12 (ana arka plan)
+--fg: #e9eef5 (ana metin rengi)
+--panel: #0e1117 (panel arka planı)
+--bd: #223 (border rengi)
+--accent: #62aaff (vurgu rengi)
+--ok: #10b981 (başarı rengi)
+--warn: #f59e0b (uyarı rengi)
+
+📐 LAYOUT HIERARCHY
+-------------------
+VideoEditor (900px-1400px)
+├── Timeline Panel (full width)
+│   ├── Controls Row (flex wrap)
+│   └── Timeline (76px height)
+└── Content Row (flex row, 800px min)
+    ├── Player (60%, 400px-500px)
+    │   ├── Video Container (16:9 ratio)
+    │   └── Controls Panel
+    └── Cuts List (40%, 280px-350px)
+
+Bu boyutlar, uygulamanın farklı ekran boyutlarında optimal performans ve görünüm sağlaması için tasarlanmıştır.
+

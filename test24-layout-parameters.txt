@@ -1,0 +1,191 @@
+🎯 TEST24.HTML - SİMETRİK LAYOUT PARAMETRELERİ
+==============================================
+
+📐 ANA LAYOUT SİSTEMİ
+---------------------
+1. WRAP CONTAINER (Ana Kapsayıcı):
+   .wrap {
+     max-width: 1200px;
+     margin: 28px auto;        /* Üstten 28px, yatayda ortala */
+     padding: 0 16px;          /* Yanlarda 16px padding */
+   }
+
+2. GRID LAYOUT (Ana Düzen):
+   .grid {
+     display: grid;
+     grid-template-columns: 1fr 340px;  /* Sol kolon esnek, sağ kolon sabit 340px */
+     gap: 16px;                         /* Kolonlar arası 16px boşluk */
+   }
+
+   /* Responsive breakpoint */
+   @media (max-width: 980px) {
+     .grid {
+       grid-template-columns: 1fr;      /* Tek kolon düzenine geç */
+     }
+   }
+
+🎛️ PANEL SİSTEMİ (Simetrik Container'lar)
+-----------------------------------------
+.panel {
+  background: var(--panel);      /* #0e1117 */
+  border: 1px solid var(--bd);   /* #223 */
+  border-radius: 12px;           /* Köşe yuvarlaklığı */
+  padding: 12px;                 /* İç boşluk */
+}
+
+/* Timeline panel özel padding */
+.panel:has(.tl) {
+  padding: 12px 12px 16px 12px;  /* Alt kısma ekstra 4px */
+}
+
+🔄 ROW SİSTEMİ (Yatay Hizalama)
+-------------------------------
+.row {
+  display: flex;
+  gap: 12px;                     /* Elementler arası 12px boşluk */
+  align-items: center;           /* Dikey ortala */
+  flex-wrap: wrap;               /* Taşan elementleri alt satıra geçir */
+}
+
+/* Özel row stilleri */
+justify-content: space-between;  /* Elementleri iki yana yaslama */
+align-items: center;             /* Dikey ortala */
+
+🎮 ELEMENT PARAMETRELERİ
+------------------------
+1. BUTTON (.btn):
+   padding: 8px 12px;            /* Yatay 12px, dikey 8px */
+   border-radius: 8px;           /* Köşe yuvarlaklığı */
+   border: 1px solid #2a3244;    /* Border rengi */
+   background: #131b28;          /* Arka plan */
+
+2. PILL (.pill):
+   padding: 6px 10px;            /* Yatay 10px, dikey 6px */
+   border-radius: 999px;         /* Tam yuvarlak köşeler */
+   background: #101826;          /* Arka plan */
+   border: 1px solid #1b2230;    /* Border rengi */
+
+3. RANGE INPUT:
+   flex: 1;                      /* Esnek genişlik */
+   min-width: 240px;             /* Minimum genişlik */
+   height: 6px;                  /* Yükseklik */
+   border-radius: 4px;           /* Köşe yuvarlaklığı */
+
+🎬 VİDEO PLAYER PARAMETRELERİ
+-----------------------------
+.player {
+  position: relative;
+  background: #000;
+  border: 1px solid var(--bd);   /* #223 */
+  border-radius: 12px;
+  overflow: hidden;
+}
+
+.pad {
+  position: relative;
+  width: 100%;
+  aspect-ratio: 16/9;            /* 16:9 en-boy oranı */
+  background: #000;
+}
+
+video.layer {
+  position: absolute;
+  inset: 0;                      /* top:0, right:0, bottom:0, left:0 */
+  width: 100%;
+  height: 100%;
+  object-fit: contain;           /* Video oranını koru */
+  transition: opacity 150ms linear;
+}
+
+📊 TİMELİNE PARAMETRELERİ
+-------------------------
+.tl {
+  position: relative;
+  height: 76px;                  /* Sabit yükseklik */
+  border-radius: 10px;
+  background: linear-gradient(180deg, #0f1625, #0b1220);
+  border: 1px solid #1f2a3f;
+  margin-top: 6px;
+  overflow: visible;
+}
+
+.tl .track {
+  position: absolute;
+  left: 8px;                     /* Sol kenardan 8px */
+  right: 8px;                    /* Sağ kenardan 8px */
+  top: 60%;                      /* Üstten %60 */
+  height: 4px;
+  background: #1a2740;
+  border-radius: 999px;
+  transform: translateY(-50%);   /* Dikey ortala */
+}
+
+.handle {
+  position: absolute;
+  top: 60%;                      /* Timeline ortasında */
+  width: 12px;
+  height: 30px;
+  background: #0f2a49;
+  border: 1px solid #2a4e7a;
+  border-radius: 3px;
+  transform: translate(-50%, -50%);  /* Tam ortala */
+  cursor: ew-resize;
+  transition: all 0.1s ease-out;
+}
+
+.label {
+  position: absolute;
+  top: 8px;                      /* Handle'ın üstünde 8px */
+  transform: translateX(-50%);   /* Yatayda ortala */
+  font: 11px/1.2 ui-monospace, Menlo, Consolas, monospace;
+  background: rgba(8, 17, 30, 0.95);
+  padding: 3px 8px;
+  border: 1px solid #132033;
+  border-radius: 6px;
+  white-space: nowrap;
+  z-index: 10;
+  backdrop-filter: blur(4px);
+  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.3);
+}
+
+🎯 SİMETRİK LAYOUT'UN SAĞLANMA PRENSİPLERİ
+==========================================
+
+1. MERKEZ HIZALAMA:
+   - Ana container: margin: 28px auto (yatayda ortala)
+   - Max-width: 1200px (büyük ekranlarda sınırla)
+   - Padding: 0 16px (kenarlardan eşit boşluk)
+
+2. GRID SİSTEMİ:
+   - Sol kolon: 1fr (esnek, kalan alanı kapla)
+   - Sağ kolon: 340px (sabit genişlik)
+   - Gap: 16px (kolonlar arası eşit boşluk)
+
+3. PANEL SİMETRİSİ:
+   - Tüm paneller aynı border-radius: 12px
+   - Aynı padding: 12px
+   - Aynı border ve background renkleri
+   - Aynı box-shadow efektleri
+
+4. ELEMENT HIZALAMA:
+   - Flexbox kullanımı: display: flex
+   - align-items: center (dikey ortala)
+   - justify-content: space-between (yatayda dağıt)
+   - gap: 12px (elementler arası eşit boşluk)
+
+5. TRANSFORM KULLANIMI:
+   - translate(-50%, -50%) ile tam ortala
+   - translateY(-50%) ile dikey ortala
+   - translateX(-50%) ile yatay ortala
+
+6. CONSISTENT SPACING:
+   - 4px, 6px, 8px, 10px, 12px, 16px (4'ün katları)
+   - Fibonacci benzeri artış: 6px → 8px → 12px → 16px
+
+7. RESPONSIVE TASARIM:
+   - 980px breakpoint'te tek kolonlu düzen
+   - Flex-wrap ile taşan elementleri alt satıra geçir
+   - Min-width değerleri ile minimum boyutları koru
+
+Bu parametreler sayesinde tüm elementler matematiksel olarak simetrik ve hizalı görünür!
+

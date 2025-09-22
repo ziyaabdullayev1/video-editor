@@ -1,0 +1,185 @@
+🎯 OVERLAPPING CUTS PROBLEM & SOLUTION
+=====================================
+
+📋 THE PROBLEM
+--------------
+When users create cut ranges in this order:
+1. Cut: 00:05 - 00:15 (10 seconds)
+2. Cut: 00:35 - 00:45 (10 seconds) 
+3. Cut: 00:10 - 00:40 (30 seconds) ← This overlaps with both previous cuts!
+
+The third cut spans across both previous cuts:
+- Overlaps with cut #1 from 00:10 to 00:15
+- Overlaps with cut #2 from 00:35 to 00:40
+- Creates a continuous cut from 00:05 to 00:45
+
+Without proper handling, this would cause:
+❌ Duplicate cut regions
+❌ Timeline calculation errors
+❌ Video playback bugs
+❌ Inconsistent effective time mapping
+
+🔧 THE SOLUTION: normalizeCuts() FUNCTION
+=========================================
+
+The solution is implemented in the `normalizeCuts()` function that:
+1. Sorts all cuts by start time
+2. Merges overlapping or touching cuts
+3. Returns a clean, non-overlapping cut list
+
+```javascript
+function normalizeCuts(arr) {
+  if (arr.length === 0) return [];
+  
+  // Step 1: Sort by start time
+  arr.sort((a, b) => a.s - b.s);
+  
+  const merged = [];
+  let current = {...arr[0]};  // Start with first cut
+  
+  // Step 2: Check each subsequent cut for overlap
+  for (let i = 1; i < arr.length; i++) {
+    const next = arr[i];
+    
+    // Step 3: Check if current cut overlaps or touches next cut
+    if (current.e >= next.s - 1e-3) {  // 1ms tolerance for floating point
+      // MERGE: Extend current cut to include next cut
+      current.e = Math.max(current.e, next.e);
+    } else {
+      // NO OVERLAP: Add current to result and start new current
+      merged.push(current);
+      current = {...next};
+    }
+  }
+  
+  // Step 4: Don't forget the last cut
+  merged.push(current);
+  
+  return merged;
+}
+```
+
+🎬 EXAMPLE: HOW THE ALGORITHM WORKS
+===================================
+
+BEFORE NORMALIZATION:
+cuts = [
+  {s: 5, e: 15},   // 00:05 - 00:15
+  {s: 35, e: 45},  // 00:35 - 00:45  
+  {s: 10, e: 40}   // 00:10 - 00:40 (overlapping)
+]
+
+STEP 1 - SORT BY START TIME:
+cuts = [
+  {s: 5, e: 15},   // 00:05 - 00:15
+  {s: 10, e: 40},  // 00:10 - 00:40
+  {s: 35, e: 45}   // 00:35 - 00:45
+]
+
+STEP 2 - MERGE OVERLAPPING CUTS:
+
+Iteration 1:
+- current = {s: 5, e: 15}
+- next = {s: 10, e: 40}
+- Check: 15 >= 10? YES → MERGE
+- current = {s: 5, e: 40}  // Extended end time
+
+Iteration 2:
+- current = {s: 5, e: 40}
+- next = {s: 35, e: 45}
+- Check: 40 >= 35? YES → MERGE  
+- current = {s: 5, e: 45}  // Extended end time again
+
+FINAL RESULT:
+cuts = [
+  {s: 5, e: 45}   // Single merged cut: 00:05 - 00:45
+]
+
+🎯 WHERE IT'S APPLIED
+=====================
+
+The normalizeCuts() function is called in two places:
+
+1. WHEN ADDING A NEW CUT:
+```javascript
+btnCut.addEventListener('click', () => {
+  // Convert effective selection to real time
+  const realStart = effToReal(selEffStart);
+  const realEnd = effToReal(selEffEnd);
+  
+  // Add new cut to array
+  cuts.push({s: realStart, e: realEnd});
+  
+  // 🔥 NORMALIZE TO MERGE OVERLAPS
+  cuts = normalizeCuts(cuts);
+  
+  // Continue with UI updates...
+});
+```
+
+2. WHEN REMOVING A CUT (UNDO):
+```javascript
+// Remove specific cut and normalize remaining cuts
+cuts.splice(i, 1); 
+cuts = normalizeCuts(cuts);  // Clean up any new overlaps
+```
+
+🧮 MATHEMATICAL PRECISION
+=========================
+
+The algorithm uses a small tolerance (1e-3 = 0.001 seconds = 1ms) to handle:
+- Floating point precision errors
+- Cuts that are exactly touching (no gap between them)
+- Minor rounding differences
+
+```javascript
+if (current.e >= next.s - 1e-3) {  // 1ms tolerance
+```
+
+This ensures that cuts like:
+- Cut A: 00:05.000 - 00:15.000
+- Cut B: 00:15.000 - 00:25.000
+
+Are properly merged into: 00:05.000 - 00:25.000
+
+🎮 REAL-TIME VS EFFECTIVE TIME
+==============================
+
+Important: The normalization happens on REAL TIME coordinates, not effective time.
+
+REAL TIME = Actual video timeline (with cuts included)
+EFFECTIVE TIME = User-visible timeline (cuts removed)
+
+The cuts array always stores REAL time coordinates:
+```javascript
+cuts = [{s: realStart, e: realEnd}]  // Real time coordinates
+```
+
+This ensures that:
+✅ Cut merging calculations are accurate
+✅ Video playback skipping works correctly  
+✅ Timeline display remains consistent
+✅ Export functionality gets correct cut points
+
+🚀 PERFORMANCE BENEFITS
+=======================
+
+By normalizing cuts:
+1. FEWER ITERATIONS: Less cuts to check during playback
+2. SIMPLER LOGIC: No complex overlap detection needed elsewhere
+3. CONSISTENT STATE: Always have clean, non-overlapping cuts
+4. EASIER DEBUGGING: Clear cut boundaries for troubleshooting
+
+🎯 EDGE CASES HANDLED
+====================
+
+1. IDENTICAL CUTS: Duplicate cuts are merged
+2. NESTED CUTS: Smaller cuts inside larger ones are absorbed
+3. TOUCHING CUTS: Adjacent cuts with no gap are merged
+4. FLOATING POINT ERRORS: 1ms tolerance prevents precision issues
+5. EMPTY ARRAY: Returns empty array safely
+6. SINGLE CUT: Returns single cut unchanged
+
+This elegant solution ensures that no matter how users create overlapping cuts, 
+the system always maintains a clean, consistent state! 🎬
+
