@@ -1,0 +1,184 @@
+<!DOCTYPE html>
+<html lang="tr">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Video Editor URL Tester</title>
+    <style>
+        body {
+            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+            max-width: 800px;
+            margin: 50px auto;
+            padding: 20px;
+            background: #0b0d12;
+            color: #e9eef5;
+        }
+        .container {
+            background: #1a1d24;
+            padding: 30px;
+            border-radius: 12px;
+            box-shadow: 0 4px 6px rgba(0,0,0,0.3);
+        }
+        h1 {
+            color: #60a5fa;
+            margin-bottom: 20px;
+        }
+        .input-group {
+            margin-bottom: 20px;
+        }
+        label {
+            display: block;
+            margin-bottom: 8px;
+            color: #9ca3af;
+            font-size: 14px;
+        }
+        input {
+            width: 100%;
+            padding: 12px;
+            background: #0b0d12;
+            border: 1px solid #374151;
+            border-radius: 6px;
+            color: #e9eef5;
+            font-size: 14px;
+            box-sizing: border-box;
+        }
+        input:focus {
+            outline: none;
+            border-color: #60a5fa;
+        }
+        button {
+            background: #3b82f6;
+            color: white;
+            padding: 12px 24px;
+            border: none;
+            border-radius: 6px;
+            cursor: pointer;
+            font-size: 16px;
+            font-weight: 600;
+            transition: background 0.2s;
+        }
+        button:hover {
+            background: #2563eb;
+        }
+        .result {
+            margin-top: 20px;
+            padding: 15px;
+            background: #065f46;
+            border: 1px solid #059669;
+            border-radius: 6px;
+            display: none;
+        }
+        .result.show {
+            display: block;
+        }
+        .result a {
+            color: #34d399;
+            word-break: break-all;
+        }
+        .example {
+            margin-top: 30px;
+            padding: 15px;
+            background: #1e293b;
+            border-left: 4px solid #60a5fa;
+            border-radius: 4px;
+        }
+        .example h3 {
+            margin-top: 0;
+            color: #60a5fa;
+        }
+        .example code {
+            background: #0b0d12;
+            padding: 2px 6px;
+            border-radius: 4px;
+            color: #fbbf24;
+            font-size: 13px;
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <h1>🎬 Video Editor URL Test Aracı</h1>
+        
+        <div class="input-group">
+            <label for="baseUrl">Video Editor URL'si:</label>
+            <input 
+                type="text" 
+                id="baseUrl" 
+                value="http://192.168.1.114:4001"
+                placeholder="http://192.168.1.114:4001"
+            >
+        </div>
+
+        <div class="input-group">
+            <label for="videoPath">Video Path (query parametresi):</label>
+            <input 
+                type="text" 
+                id="videoPath" 
+                value="/outputs/output_1759526107745.mp4_final_output.mp4"
+                placeholder="/outputs/video.mp4"
+            >
+        </div>
+
+        <button onclick="generateUrl()">🔗 URL Oluştur ve Aç</button>
+
+        <div class="result" id="result">
+            <strong>Oluşturulan URL:</strong><br>
+            <a href="#" id="generatedUrl" target="_blank"></a>
+        </div>
+
+        <div class="example">
+            <h3>📋 Örnek Kullanımlar:</h3>
+            <p><strong>1. Tek bir video için:</strong></p>
+            <code>http://192.168.1.114:4001/?path=/outputs/my_video.mp4</code>
+            
+            <p style="margin-top: 15px;"><strong>2. Video recorder'dan gönderim:</strong></p>
+            <pre style="background: #0b0d12; padding: 10px; border-radius: 4px; overflow-x: auto;"><code>// JavaScript örneği
+const videoPath = '/outputs/output_123.mp4';
+const editorUrl = `http://192.168.1.114:4001/?path=${encodeURIComponent(videoPath)}`;
+window.open(editorUrl, '_blank');</code></pre>
+
+            <p style="margin-top: 15px;"><strong>3. HTML link örneği:</strong></p>
+            <pre style="background: #0b0d12; padding: 10px; border-radius: 4px; overflow-x: auto;"><code>&lt;a href="http://192.168.1.114:4001/?path=/outputs/video.mp4" target="_blank"&gt;
+  Video Editor'da Düzenle
+&lt;/a&gt;</code></pre>
+        </div>
+    </div>
+
+    <script>
+        function generateUrl() {
+            const baseUrl = document.getElementById('baseUrl').value.trim();
+            const videoPath = document.getElementById('videoPath').value.trim();
+            
+            if (!baseUrl || !videoPath) {
+                alert('Lütfen tüm alanları doldurun!');
+                return;
+            }
+
+            // Remove trailing slash from baseUrl if exists
+            const cleanBaseUrl = baseUrl.replace(/\/$/, '');
+            
+            // Create URL with query parameter
+            const fullUrl = `${cleanBaseUrl}/?path=${encodeURIComponent(videoPath)}`;
+            
+            // Update result
+            const resultDiv = document.getElementById('result');
+            const linkElement = document.getElementById('generatedUrl');
+            
+            linkElement.href = fullUrl;
+            linkElement.textContent = fullUrl;
+            resultDiv.classList.add('show');
+            
+            // Open in new tab
+            window.open(fullUrl, '_blank');
+        }
+
+        // Allow Enter key to trigger URL generation
+        document.getElementById('videoPath').addEventListener('keypress', function(e) {
+            if (e.key === 'Enter') {
+                generateUrl();
+            }
+        });
+    </script>
+</body>
+</html>
+

@@ -592,9 +592,21 @@ const VideoEditor = () => {
     
     if (pathParam) {
       console.log('🔗 Video path from URL:', pathParam);
-      // Construct full URL using the path from query string
-      // The recorder app serves files from /outputs, so we use that path directly
-      const fullVideoUrl = pathParam; // e.g., "/outputs/output_1759526107745.mp4_final_output.mp4"
+      
+      // If path starts with /outputs, it's from the recorder app
+      // Use the recorder app's domain to fetch the video
+      let fullVideoUrl = pathParam;
+      
+      if (pathParam.startsWith('/outputs/')) {
+        // Video recorder sunucusu - domain'i buradan alıyoruz
+        const recorderDomain = 'https://videocut.boencv.com';
+        fullVideoUrl = `${recorderDomain}${pathParam}`;
+        console.log('🎬 Loading from recorder app:', fullVideoUrl);
+      } else {
+        // Local path or absolute URL
+        fullVideoUrl = pathParam;
+      }
+      
       setVideoUrl(fullVideoUrl);
       setVideoSource('url');
       console.log('✅ Video URL set from query string:', fullVideoUrl);
