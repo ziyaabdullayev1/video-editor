@@ -6,9 +6,10 @@ interface VideoUploadProps {
   onVideoSelect: (file: File) => void;
   currentVideo: string | null;
   onClearVideo: () => void;
+  videoSource?: 'file' | 'url';
 }
 
-const VideoUpload = ({ onVideoSelect, currentVideo, onClearVideo }: VideoUploadProps) => {
+const VideoUpload = ({ onVideoSelect, currentVideo, onClearVideo, videoSource = 'file' }: VideoUploadProps) => {
   const fileInputRef = useRef<HTMLInputElement>(null);
   const [dragOver, setDragOver] = useState(false);
   const [uploading, setUploading] = useState(false);
@@ -128,9 +129,14 @@ const VideoUpload = ({ onVideoSelect, currentVideo, onClearVideo }: VideoUploadP
         <div className="bg-green-900 bg-opacity-30 border border-green-600 rounded-lg p-4">
           <div className="flex items-center gap-3">
             <div className="text-green-400 text-2xl">✅</div>
-            <div>
-              <div className="text-green-300 font-medium">Video yüklendi</div>
-              <div className="text-sm text-gray-400">
+            <div className="flex-1">
+              <div className="text-green-300 font-medium">
+                {videoSource === 'url' ? '🔗 URL\'den video yüklendi' : '📁 Video yüklendi'}
+              </div>
+              <div className="text-sm text-gray-400 break-all">
+                {currentVideo}
+              </div>
+              <div className="text-xs text-gray-500 mt-1">
                 Artık timeline'da düzenleme yapabilirsiniz
               </div>
             </div>

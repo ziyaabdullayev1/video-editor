@@ -27,7 +27,8 @@ const VideoEditor = () => {
   
   // Video upload state
   const [videoFile, setVideoFile] = useState<File | null>(null);
-  const [videoUrl, setVideoUrl] = useState<string>('/video.mp4'); // Default video
+  const [videoUrl, setVideoUrl] = useState<string>(''); // Will be set from URL or default
+  const [videoSource, setVideoSource] = useState<'file' | 'url'>('url'); // Track video source
 
   // Selection on effective axis
   const [selEffStart, setSelEffStart] = useState(0.0);
@@ -455,6 +456,7 @@ const VideoEditor = () => {
     const newVideoUrl = URL.createObjectURL(file);
     setVideoFile(file);
     setVideoUrl(newVideoUrl);
+    setVideoSource('file');
     
     // Reset editor state
     setCuts([]);
@@ -583,6 +585,27 @@ const VideoEditor = () => {
     };
   }, []); // Empty dependency - only on unmount
 
+  // Load video from URL query parameter on mount
+  useEffect(() => {
+    const params = new URLSearchParams(window.location.search);
+    const pathParam = params.get('path');
+    
+    if (pathParam) {
+      console.log('🔗 Video path from URL:', pathParam);
+      // Construct full URL using the path from query string
+      // The recorder app serves files from /outputs, so we use that path directly
+      const fullVideoUrl = pathParam; // e.g., "/outputs/output_1759526107745.mp4_final_output.mp4"
+      setVideoUrl(fullVideoUrl);
+      setVideoSource('url');
+      console.log('✅ Video URL set from query string:', fullVideoUrl);
+    } else {
+      // Default video if no query parameter
+      console.log('📺 No path parameter, using default video');
+      setVideoUrl('/video.mp4');
+      setVideoSource('url');
+    }
+  }, []); // Only run once on mount
+
   return (
     <div className="w-full mx-auto px-4" style={{ maxWidth: '1200px', marginTop: '28px', overflowX: 'auto' }}>
       <h1 className="mb-3 text-lg font-bold">
@@ -592,8 +615,9 @@ const VideoEditor = () => {
       {/* Video Upload */}
       <VideoUpload
         onVideoSelect={handleVideoSelect}
-        currentVideo={videoFile ? videoFile.name : null}
+        currentVideo={videoFile ? videoFile.name : (videoSource === 'url' && videoUrl && videoUrl !== '/video.mp4' ? videoUrl : null)}
         onClearVideo={handleClearVideo}
+        videoSource={videoSource}
       />
 
       {/* Timeline + Zoom - Full width */}
