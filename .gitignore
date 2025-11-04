@@ -35,3 +35,7 @@ next-env.d.ts
 # IDE
 .vscode/
 .idea/
+
+# Video exports and temp files
+/public/exports/
+/temp/

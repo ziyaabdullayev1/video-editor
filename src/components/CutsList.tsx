@@ -10,9 +10,12 @@ interface CutsListProps {
   fmt: (t: number, showMs?: boolean) => string;
   onRemoveCut: (index: number) => void;
   onClearAll: () => void;
+  onExport?: () => void;
+  exporting?: boolean;
+  exportProgress?: string;
 }
 
-const CutsList = ({ cuts, fmt, onRemoveCut, onClearAll }: CutsListProps) => {
+const CutsList = ({ cuts, fmt, onRemoveCut, onClearAll, onExport, exporting, exportProgress }: CutsListProps) => {
   console.log('📋 CutsList rendered with', cuts.length, 'cuts:', cuts); // Debug
   const hasCuts = cuts.length > 0;
 
@@ -36,7 +39,33 @@ const CutsList = ({ cuts, fmt, onRemoveCut, onClearAll }: CutsListProps) => {
           Henüz kesim yok.
         </div>
       ) : (
-        <div className="overflow-x-auto">
+        <>
+          {onExport && (
+            <div className="mb-4">
+              <button
+                onClick={onExport}
+                disabled={exporting}
+                className="btn btn-ok w-full text-base py-3 font-semibold"
+                title="Kesimleri uygulayıp videoyu indir"
+              >
+                {exporting ? (
+                  <>
+                    ⏳ {exportProgress || 'İşleniyor...'}
+                  </>
+                ) : (
+                  <>
+                    📥 Videoyu Dışa Aktar ve İndir
+                  </>
+                )}
+              </button>
+              {hasCuts && (
+                <div className="text-sm text-gray-400 mt-2 text-center">
+                  {cuts.length} kesim uygulanacak
+                </div>
+              )}
+            </div>
+          )}
+          <div className="overflow-x-auto">
           <table className="w-full border-collapse">
             <thead>
               <tr className="border-b border-[#223]">
@@ -84,7 +113,8 @@ const CutsList = ({ cuts, fmt, onRemoveCut, onClearAll }: CutsListProps) => {
               })}
             </tbody>
           </table>
-        </div>
+          </div>
+        </>
       )}
     </div>
   );

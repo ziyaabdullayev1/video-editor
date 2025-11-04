@@ -29,6 +29,10 @@ const VideoEditor = () => {
   const [videoFile, setVideoFile] = useState<File | null>(null);
   const [videoUrl, setVideoUrl] = useState<string>(''); // Will be set from URL or default
   const [videoSource, setVideoSource] = useState<'file' | 'url'>('url'); // Track video source
+  
+  // Export state
+  const [exporting, setExporting] = useState(false);
+  const [exportProgress, setExportProgress] = useState('');
 
   // Selection on effective axis
   const [selEffStart, setSelEffStart] = useState(0.0);
@@ -490,6 +494,64 @@ const VideoEditor = () => {
     console.log('✅ Video cleared, back to default');
   };
 
+  // Export video with cuts
+  const handleExportVideo = async () => {
+    if (!videoUrl || cuts.length === 0) {
+      alert('Önce video yükleyin ve en az bir kesim yapın!');
+      return;
+    }
+
+    if (!window.confirm(`${cuts.length} kesim uygulanarak video dışa aktarılsın mı?`)) {
+      return;
+    }
+
+    setExporting(true);
+    setExportProgress('Video işleniyor...');
+
+    try {
+      console.log('🎬 Starting export...', { videoUrl, cuts });
+
+      const response = await fetch('/api/export-video', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify({
+          videoUrl: videoUrl,
+          cuts: cuts,
+        }),
+      });
+
+      if (!response.ok) {
+        const error = await response.json();
+        throw new Error(error.message || 'Export failed');
+      }
+
+      const result = await response.json();
+      console.log('✅ Export successful:', result);
+
+      setExportProgress('İndiriliyor...');
+
+      // Download the file
+      const link = document.createElement('a');
+      link.href = result.downloadUrl;
+      link.download = result.filename;
+      document.body.appendChild(link);
+      link.click();
+      document.body.removeChild(link);
+
+      setExportProgress('');
+      alert('✅ Video başarıyla dışa aktarıldı ve indirildi!');
+
+    } catch (error: any) {
+      console.error('❌ Export error:', error);
+      alert('❌ Video dışa aktarılamadı: ' + error.message);
+      setExportProgress('');
+    } finally {
+      setExporting(false);
+    }
+  };
+
   // Initialize on metadata load
   const onMeta = () => {
     const dur = (videoARef.current?.duration && isFinite(videoARef.current.duration))
@@ -730,6 +792,9 @@ const VideoEditor = () => {
             fmt={fmt}
             onRemoveCut={removeCut}
             onClearAll={clearAllCuts}
+            onExport={handleExportVideo}
+            exporting={exporting}
+            exportProgress={exportProgress}
           />
         </div>
       </div>

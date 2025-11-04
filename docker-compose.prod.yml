@@ -5,6 +5,9 @@ services:
     build:
       context: .
       dockerfile: Dockerfile
+    volumes:
+      - ./public/exports:/app/public/exports
+      - ./temp:/app/temp
     environment:
       - NODE_ENV=production
     restart: always
