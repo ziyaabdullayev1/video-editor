@@ -10,12 +10,14 @@ interface CutsListProps {
   fmt: (t: number, showMs?: boolean) => string;
   onRemoveCut: (index: number) => void;
   onClearAll: () => void;
-  onExport?: () => void;
+  onSave?: () => void;
+  onDownload?: () => void;
   exporting?: boolean;
   exportProgress?: string;
+  lastExportedFile?: string | null;
 }
 
-const CutsList = ({ cuts, fmt, onRemoveCut, onClearAll, onExport, exporting, exportProgress }: CutsListProps) => {
+const CutsList = ({ cuts, fmt, onRemoveCut, onClearAll, onSave, onDownload, exporting, exportProgress, lastExportedFile }: CutsListProps) => {
   console.log('📋 CutsList rendered with', cuts.length, 'cuts:', cuts); // Debug
   const hasCuts = cuts.length > 0;
 
@@ -40,27 +42,60 @@ const CutsList = ({ cuts, fmt, onRemoveCut, onClearAll, onExport, exporting, exp
         </div>
       ) : (
         <>
-          {onExport && (
-            <div className="mb-4">
-              <button
-                onClick={onExport}
-                disabled={exporting}
-                className="btn btn-ok w-full text-base py-3 font-semibold"
-                title="Kesimleri uygulayıp videoyu indir"
-              >
-                {exporting ? (
-                  <>
-                    ⏳ {exportProgress || 'İşleniyor...'}
-                  </>
-                ) : (
-                  <>
-                    📥 Videoyu Dışa Aktar ve İndir
-                  </>
-                )}
-              </button>
+          {(onSave || onDownload) && (
+            <div className="mb-4 space-y-2">
+              {onSave && (
+                <button
+                  onClick={onSave}
+                  disabled={exporting}
+                  className="btn btn-ok w-full text-base py-3 font-semibold"
+                  title="Kesimleri uygulayıp videoyu sunucuda kaydet"
+                >
+                  {exporting ? (
+                    <>
+                      ⏳ {exportProgress || 'İşleniyor...'}
+                    </>
+                  ) : (
+                    <>
+                      💾 Videoyu Kaydet
+                    </>
+                  )}
+                </button>
+              )}
+              
+              {onDownload && (
+                <button
+                  onClick={onDownload}
+                  disabled={exporting || !lastExportedFile}
+                  className="btn w-full text-base py-3 font-semibold"
+                  style={{
+                    background: lastExportedFile ? '#1a3b5c' : '#131b28',
+                    borderColor: lastExportedFile ? '#2a4e7a' : '#2a3244',
+                    opacity: lastExportedFile ? 1 : 0.5,
+                    cursor: lastExportedFile ? 'pointer' : 'not-allowed'
+                  }}
+                  title={lastExportedFile ? 'Kaydedilen videoyu indir' : 'Önce videoyu kaydedin'}
+                >
+                  {exporting && exportProgress?.includes('İndiriliyor') ? (
+                    <>
+                      ⏳ İndiriliyor...
+                    </>
+                  ) : (
+                    <>
+                      📥 Videoyu İndir {lastExportedFile && '✓'}
+                    </>
+                  )}
+                </button>
+              )}
+              
               {hasCuts && (
                 <div className="text-sm text-gray-400 mt-2 text-center">
                   {cuts.length} kesim uygulanacak
+                  {lastExportedFile && (
+                    <div className="text-xs text-green-400 mt-1">
+                      ✓ {lastExportedFile}
+                    </div>
+                  )}
                 </div>
               )}
             </div>

@@ -33,6 +33,7 @@ const VideoEditor = () => {
   // Export state
   const [exporting, setExporting] = useState(false);
   const [exportProgress, setExportProgress] = useState('');
+  const [lastExportedFile, setLastExportedFile] = useState<string | null>(null);
 
   // Selection on effective axis
   const [selEffStart, setSelEffStart] = useState(0.0);
@@ -494,14 +495,14 @@ const VideoEditor = () => {
     console.log('✅ Video cleared, back to default');
   };
 
-  // Export video with cuts
-  const handleExportVideo = async () => {
+  // Save video with cuts (only save on server)
+  const handleSaveVideo = async () => {
     if (!videoUrl || cuts.length === 0) {
       alert('Önce video yükleyin ve en az bir kesim yapın!');
       return;
     }
 
-    if (!window.confirm(`${cuts.length} kesim uygulanarak video dışa aktarılsın mı?`)) {
+    if (!window.confirm(`${cuts.length} kesim uygulanarak video sunucuda kaydedilsin mi?`)) {
       return;
     }
 
@@ -509,7 +510,7 @@ const VideoEditor = () => {
     setExportProgress('Video işleniyor...');
 
     try {
-      console.log('🎬 Starting export...', { videoUrl, cuts });
+      console.log('💾 Starting save...', { videoUrl, cuts });
 
       const response = await fetch('/api/export-video', {
         method: 'POST',
@@ -524,31 +525,53 @@ const VideoEditor = () => {
 
       if (!response.ok) {
         const error = await response.json();
-        throw new Error(error.message || 'Export failed');
+        throw new Error(error.message || 'Save failed');
       }
 
       const result = await response.json();
-      console.log('✅ Export successful:', result);
+      console.log('✅ Save successful:', result);
 
+      setLastExportedFile(result.filename);
+      setExportProgress('');
+      alert(`✅ Video başarıyla sunucuda kaydedildi!\n\nDosya adı: ${result.filename}`);
+
+    } catch (error: any) {
+      console.error('❌ Save error:', error);
+      alert('❌ Video kaydedilemedi: ' + error.message);
+      setExportProgress('');
+    } finally {
+      setExporting(false);
+    }
+  };
+
+  // Download saved video
+  const handleDownloadVideo = async () => {
+    if (!lastExportedFile) {
+      alert('Önce videoyu kaydetmelisiniz!');
+      return;
+    }
+
+    try {
       setExportProgress('İndiriliyor...');
+      console.log('📥 Downloading:', lastExportedFile);
 
-      // Download the file
+      // Use API endpoint for download
+      const downloadUrl = `/api/download-video/${lastExportedFile}`;
+      
+      // Create a temporary link and trigger download
       const link = document.createElement('a');
-      link.href = result.downloadUrl;
-      link.download = result.filename;
+      link.href = downloadUrl;
+      link.download = lastExportedFile;
       document.body.appendChild(link);
       link.click();
       document.body.removeChild(link);
 
       setExportProgress('');
-      alert('✅ Video başarıyla dışa aktarıldı ve indirildi!');
-
+      
     } catch (error: any) {
-      console.error('❌ Export error:', error);
-      alert('❌ Video dışa aktarılamadı: ' + error.message);
+      console.error('❌ Download error:', error);
+      alert('❌ Video indirilemedi: ' + error.message);
       setExportProgress('');
-    } finally {
-      setExporting(false);
     }
   };
 
@@ -792,9 +815,11 @@ const VideoEditor = () => {
             fmt={fmt}
             onRemoveCut={removeCut}
             onClearAll={clearAllCuts}
-            onExport={handleExportVideo}
+            onSave={handleSaveVideo}
+            onDownload={handleDownloadVideo}
             exporting={exporting}
             exportProgress={exportProgress}
+            lastExportedFile={lastExportedFile}
           />
         </div>
       </div>
