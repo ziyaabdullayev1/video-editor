@@ -41,6 +41,8 @@ http://localhost:3000/?path=/outputs/video.mp4
 https://videocut.boencv.com/?path=/outputs/output_1759526107745.mp4_final_output.mp4
 ```
 
+**Note:** Video files are served from `https://boenrecord.boencv.com/outputs/` domain.
+
 The `path` parameter should point to the video file path that your server can access.
 
 ### Nginx Configuration

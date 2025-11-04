@@ -593,18 +593,26 @@ const VideoEditor = () => {
     if (pathParam) {
       console.log('🔗 Video path from URL:', pathParam);
       
-      // If path starts with /outputs, it's from the recorder app
-      // Use the recorder app's domain to fetch the video
       let fullVideoUrl = pathParam;
       
-      if (pathParam.startsWith('/outputs/')) {
-        // Video recorder sunucusu - domain'i buradan alıyoruz
-        const recorderDomain = 'https://videocut.boencv.com';
+      // Check if it's already a full URL (starts with http:// or https://)
+      if (pathParam.startsWith('http://') || pathParam.startsWith('https://')) {
+        // Already a full URL, use as-is
+        fullVideoUrl = pathParam;
+        console.log('🌐 Full URL provided:', fullVideoUrl);
+      } else if (pathParam.startsWith('/outputs/')) {
+        // Relative path from recorder app - construct full URL
+        const recorderDomain = 'https://boenrecord.boencv.com';
         fullVideoUrl = `${recorderDomain}${pathParam}`;
         console.log('🎬 Loading from recorder app:', fullVideoUrl);
-      } else {
-        // Local path or absolute URL
+      } else if (pathParam.startsWith('/')) {
+        // Local path (relative to video editor server)
         fullVideoUrl = pathParam;
+        console.log('📁 Local path:', fullVideoUrl);
+      } else {
+        // Assume it's a relative path, add leading slash
+        fullVideoUrl = `/${pathParam}`;
+        console.log('📝 Relative path converted:', fullVideoUrl);
       }
       
       setVideoUrl(fullVideoUrl);
