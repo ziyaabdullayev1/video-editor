@@ -119,49 +119,6 @@ body {
   opacity: 0.9;
 }
 
-.handle {
-  position: absolute;
-  top: 60%;
-  width: 12px;
-  height: 30px;
-  background: #0f2a49;
-  border: 1px solid #2a4e7a;
-  border-radius: 3px;
-  transform: translate(-50%, -50%);
-  cursor: ew-resize;
-  transition: all 0.1s ease-out;
-}
-
-.handle:hover {
-  background: #1a3b5c;
-  border-color: #3a5e8a;
-  transform: translate(-50%, -50%) scale(1.1);
-}
-
-.handle:active {
-  background: #2a4b6c;
-  border-color: #4a6e9a;
-  transform: translate(-50%, -50%) scale(1.05);
-}
-
-.handle:after {
-  content: '';
-  position: absolute;
-  left: 50%;
-  top: 5px;
-  bottom: 5px;
-  width: 2px;
-  background: #7fb3ff;
-  transform: translateX(-50%);
-  opacity: 0.9;
-  transition: all 0.1s ease-out;
-}
-
-.handle:hover:after {
-  background: #8fc3ff;
-  opacity: 1;
-}
-
 .label {
   position: absolute;
   top: 8px;
@@ -176,11 +133,7 @@ body {
   z-index: 10;
   backdrop-filter: blur(4px);
   box-shadow: 0 2px 8px rgba(0, 0, 0, 0.3);
-}
-
-.label:hover {
-  background: rgba(8, 17, 30, 1);
-  border-color: #2a4e7a;
+  pointer-events: none; /* Labels tıklamaları engellemez */
 }
 
 /* Timeline handles */
@@ -193,9 +146,21 @@ body {
   border: 1px solid #4a9eff;
   border-radius: 3px;
   cursor: ew-resize;
-  z-index: 3;
+  z-index: 5; /* Label'ların altında ama tıklanabilir */
   transition: all 0.15s ease;
   transform: translateX(-50%);
+}
+
+/* Geniş tıklama alanı için görünmez hit area */
+.handle::before {
+  content: '';
+  position: absolute;
+  left: 50%;
+  top: 0;
+  bottom: 0;
+  width: 24px; /* Geniş tıklama alanı */
+  transform: translateX(-50%);
+  cursor: ew-resize;
 }
 
 .handle:hover {
