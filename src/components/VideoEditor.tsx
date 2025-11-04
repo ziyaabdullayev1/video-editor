@@ -508,7 +508,13 @@ const VideoEditor = () => {
     setDuration(dur);
     setViewStart(0);
     setViewEnd(dur); // Use the actual duration value, not the function
-    defaultSelection();
+    
+    // Reset selection to fit new duration
+    const w = Math.min(5, Math.max(1, dur * 0.1));
+    const newSelStart = clamp(0, 0, dur - w);
+    setSelEffStart(newSelStart);
+    setSelEffEnd(newSelStart + w);
+    console.log('🎯 Selection reset to:', newSelStart.toFixed(3), '-', (newSelStart + w).toFixed(3));
   };
 
   // Setup initial video state (removed duplicate event listeners)
