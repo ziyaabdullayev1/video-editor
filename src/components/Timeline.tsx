@@ -218,31 +218,16 @@ const Timeline = ({
     placeHandles();
   }, [selEffStart, selEffEnd, viewStart, viewEnd, duration]);
 
-  // Ultra-simple drag system - minimal working version
-  const handleMouseDown = (e: React.MouseEvent) => {
+  // Handle-specific drag handlers
+  const startHandleDrag = (e: React.MouseEvent, dragType: 'start' | 'end') => {
     if (!timelineRef.current) return;
     
-    console.log('🎯 Timeline clicked!'); // Debug
+    console.log(dragType === 'start' ? '🟢 START handle clicked!' : '🔴 END handle clicked!');
     
     e.preventDefault();
     e.stopPropagation();
 
     const rect = timelineRef.current.getBoundingClientRect();
-    const startX = e.clientX - rect.left;
-    
-    // Determine drag type based on click position
-    const startHandleX = effToX(selEffStart);
-    const endHandleX = effToX(selEffEnd);
-    
-    let dragType: 'start' | 'end';
-    if (Math.abs(startX - startHandleX) < Math.abs(startX - endHandleX)) {
-      dragType = 'start';
-      console.log('🟢 Dragging START handle');
-    } else {
-      dragType = 'end';
-      console.log('🔴 Dragging END handle');
-    }
-    
     setDragging(dragType);
     setScrubbing(true);
     
@@ -253,8 +238,8 @@ const Timeline = ({
       active()!.pause();
     }
     
-    // Initial preview at drag start
-    const initialTime = xToEff(startX);
+    // Initial preview at current handle position
+    const initialTime = dragType === 'start' ? selEffStart : selEffEnd;
     if (videoARef.current && videoBRef.current) {
       const realTime = effToReal(initialTime);
       const clampedRealTime = clamp(realTime, 0, duration - 0.001);
@@ -274,11 +259,11 @@ const Timeline = ({
       const x = ev.clientX - rect.left;
       const newTime = xToEff(x);
       
-      console.log('📍 Drag to time:', newTime);
+      console.log('📍 Drag to time:', newTime.toFixed(3));
       
-      // Throttled live preview - show the video at the dragged position
+      // Throttled live preview
       const now = performance.now();
-      if (now - dragStateRef.current.lastUpdate >= 16) { // ~60fps throttle
+      if (now - dragStateRef.current.lastUpdate >= 16) {
         dragStateRef.current.lastUpdate = now;
         
         if (videoARef.current && videoBRef.current) {
@@ -288,7 +273,6 @@ const Timeline = ({
           try {
             if (videoARef.current.readyState >= 2) {
               videoARef.current.currentTime = clampedRealTime;
-              console.log('🎬 Live preview at:', clampedRealTime.toFixed(3));
             }
           } catch (error) {
             console.warn('⚠️ Live preview failed:', error);
@@ -442,17 +426,26 @@ const Timeline = ({
     <div
       ref={timelineRef}
       className="timeline"
-      onMouseDown={handleMouseDown}
       onDoubleClick={handleDoubleClick}
       style={{ touchAction: 'none' }}
     >
       <div className="track"></div>
       {generateTimeMarkings()}
       <div ref={cutZoneRef} className="cutzone"></div>
-      <div ref={hStartRef} className="handle" id="hStart">
+      <div 
+        ref={hStartRef} 
+        className="handle" 
+        id="hStart"
+        onMouseDown={(e) => startHandleDrag(e, 'start')}
+      >
         <div ref={lblStartRef} className="label">--:--</div>
       </div>
-      <div ref={hEndRef} className="handle" id="hEnd">
+      <div 
+        ref={hEndRef} 
+        className="handle" 
+        id="hEnd"
+        onMouseDown={(e) => startHandleDrag(e, 'end')}
+      >
         <div ref={lblEndRef} className="label">--:--</div>
       </div>
     </div>
