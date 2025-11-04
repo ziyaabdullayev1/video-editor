@@ -30,8 +30,8 @@ export async function GET(
     // Read file
     const fileBuffer = await readFile(filePath);
 
-    // Return file as download
-    return new NextResponse(fileBuffer, {
+    // Return file as download using Uint8Array (compatible with Next.js 15)
+    return new NextResponse(new Uint8Array(fileBuffer), {
       headers: {
         'Content-Type': 'video/mp4',
         'Content-Disposition': `attachment; filename="${filename}"`,
