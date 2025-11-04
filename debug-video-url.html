@@ -1,0 +1,267 @@
+<!DOCTYPE html>
+<html lang="tr">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Video URL Debug Tool</title>
+    <style>
+        body {
+            font-family: monospace;
+            background: #0b0d12;
+            color: #e9eef5;
+            padding: 20px;
+            max-width: 900px;
+            margin: 0 auto;
+        }
+        .section {
+            background: #1a1d24;
+            padding: 20px;
+            margin: 20px 0;
+            border-radius: 8px;
+            border-left: 4px solid #60a5fa;
+        }
+        h2 { color: #60a5fa; margin-top: 0; }
+        input {
+            width: 100%;
+            padding: 10px;
+            background: #0b0d12;
+            border: 1px solid #374151;
+            color: #e9eef5;
+            border-radius: 4px;
+            margin: 10px 0;
+            box-sizing: border-box;
+        }
+        button {
+            background: #3b82f6;
+            color: white;
+            padding: 10px 20px;
+            border: none;
+            border-radius: 4px;
+            cursor: pointer;
+            margin: 5px;
+        }
+        button:hover { background: #2563eb; }
+        .result {
+            background: #0b0d12;
+            padding: 15px;
+            margin: 10px 0;
+            border-radius: 4px;
+            border: 1px solid #374151;
+        }
+        .success { border-color: #10b981; color: #10b981; }
+        .error { border-color: #ef4444; color: #ef4444; }
+        .warning { border-color: #f59e0b; color: #f59e0b; }
+        video {
+            width: 100%;
+            max-width: 640px;
+            background: #000;
+            border-radius: 4px;
+        }
+        pre {
+            overflow-x: auto;
+            background: #0f1419;
+            padding: 10px;
+            border-radius: 4px;
+        }
+    </style>
+</head>
+<body>
+    <h1>🔍 Video URL Debug Tool</h1>
+
+    <div class="section">
+        <h2>1. URL'yi Test Et</h2>
+        <input 
+            type="text" 
+            id="videoUrl" 
+            value="https://videocut.boencv.com/outputs/output_1759526107745.mp4_final_output.mp4"
+            placeholder="Video URL'sini girin"
+        >
+        <button onclick="testUrl()">🧪 URL'yi Test Et</button>
+        <button onclick="openInNewTab()">🔗 Yeni Sekmede Aç</button>
+        <div id="urlResult"></div>
+    </div>
+
+    <div class="section">
+        <h2>2. Video Yükleme Testi</h2>
+        <button onclick="testVideoLoad()">▶️ Video Yükle ve Oynat</button>
+        <div id="videoResult"></div>
+        <video id="testVideo" controls style="margin-top: 10px; display: none;"></video>
+    </div>
+
+    <div class="section">
+        <h2>3. CORS Testi</h2>
+        <button onclick="testCors()">🔐 CORS Kontrolü</button>
+        <div id="corsResult"></div>
+    </div>
+
+    <div class="section">
+        <h2>4. Olası Çözümler</h2>
+        <div id="solutions"></div>
+    </div>
+
+    <script>
+        async function testUrl() {
+            const url = document.getElementById('videoUrl').value;
+            const resultDiv = document.getElementById('urlResult');
+            resultDiv.innerHTML = '<div class="result warning">⏳ Test ediliyor...</div>';
+
+            try {
+                const response = await fetch(url, { method: 'HEAD' });
+                const status = response.status;
+                const contentType = response.headers.get('content-type');
+                const contentLength = response.headers.get('content-length');
+
+                let html = `<div class="result ${status === 200 ? 'success' : 'error'}">
+                    <strong>HTTP Status:</strong> ${status} ${response.statusText}<br>
+                    <strong>Content-Type:</strong> ${contentType || 'N/A'}<br>
+                    <strong>Content-Length:</strong> ${contentLength ? (parseInt(contentLength) / 1024 / 1024).toFixed(2) + ' MB' : 'N/A'}<br>
+                    <strong>URL:</strong> ${url}
+                </div>`;
+
+                if (status !== 200) {
+                    html += `<div class="result error">
+                        ❌ <strong>Sorun:</strong> Video dosyası bulunamadı veya erişilemiyor!<br>
+                        <strong>Olası nedenler:</strong><br>
+                        - Dosya sunucuda mevcut değil<br>
+                        - URL yanlış<br>
+                        - Nginx/Apache yapılandırma hatası
+                    </div>`;
+                }
+
+                resultDiv.innerHTML = html;
+            } catch (error) {
+                resultDiv.innerHTML = `<div class="result error">
+                    ❌ <strong>Fetch Hatası:</strong><br>
+                    ${error.message}<br><br>
+                    <strong>Olası nedenler:</strong><br>
+                    - CORS sorunu<br>
+                    - Sunucu yanıt vermiyor<br>
+                    - Network hatası
+                </div>`;
+            }
+        }
+
+        function openInNewTab() {
+            const url = document.getElementById('videoUrl').value;
+            window.open(url, '_blank');
+        }
+
+        function testVideoLoad() {
+            const url = document.getElementById('videoUrl').value;
+            const video = document.getElementById('testVideo');
+            const resultDiv = document.getElementById('videoResult');
+
+            video.style.display = 'block';
+            video.src = url;
+
+            resultDiv.innerHTML = '<div class="result warning">⏳ Video yükleniyor...</div>';
+
+            video.onloadedmetadata = () => {
+                resultDiv.innerHTML = `<div class="result success">
+                    ✅ <strong>Video başarıyla yüklendi!</strong><br>
+                    <strong>Süre:</strong> ${video.duration.toFixed(2)} saniye<br>
+                    <strong>Boyut:</strong> ${video.videoWidth}x${video.videoHeight}<br>
+                    <strong>Ready State:</strong> ${video.readyState}
+                </div>`;
+            };
+
+            video.onerror = (e) => {
+                const error = video.error;
+                let errorMsg = 'Bilinmeyen hata';
+                
+                if (error) {
+                    switch(error.code) {
+                        case 1: errorMsg = 'MEDIA_ERR_ABORTED - Kullanıcı tarafından durduruldu'; break;
+                        case 2: errorMsg = 'MEDIA_ERR_NETWORK - Network hatası'; break;
+                        case 3: errorMsg = 'MEDIA_ERR_DECODE - Decode hatası'; break;
+                        case 4: errorMsg = 'MEDIA_ERR_SRC_NOT_SUPPORTED - Kaynak desteklenmiyor veya bulunamadı'; break;
+                    }
+                }
+
+                resultDiv.innerHTML = `<div class="result error">
+                    ❌ <strong>Video yüklenemedi!</strong><br>
+                    <strong>Hata Kodu:</strong> ${error ? error.code : 'N/A'}<br>
+                    <strong>Açıklama:</strong> ${errorMsg}<br>
+                    <strong>Network State:</strong> ${video.networkState}<br>
+                    <strong>Ready State:</strong> ${video.readyState}
+                </div>`;
+            };
+        }
+
+        async function testCors() {
+            const url = document.getElementById('videoUrl').value;
+            const resultDiv = document.getElementById('corsResult');
+            resultDiv.innerHTML = '<div class="result warning">⏳ CORS test ediliyor...</div>';
+
+            try {
+                const response = await fetch(url, { 
+                    method: 'GET',
+                    mode: 'cors'
+                });
+
+                const corsHeaders = {
+                    'Access-Control-Allow-Origin': response.headers.get('Access-Control-Allow-Origin'),
+                    'Access-Control-Allow-Methods': response.headers.get('Access-Control-Allow-Methods'),
+                    'Access-Control-Allow-Headers': response.headers.get('Access-Control-Allow-Headers'),
+                };
+
+                let html = `<div class="result success">
+                    ✅ <strong>CORS Kontrolü Başarılı</strong><br>
+                    <pre>${JSON.stringify(corsHeaders, null, 2)}</pre>
+                </div>`;
+
+                resultDiv.innerHTML = html;
+            } catch (error) {
+                resultDiv.innerHTML = `<div class="result error">
+                    ❌ <strong>CORS Hatası Tespit Edildi!</strong><br>
+                    ${error.message}<br><br>
+                    <strong>Çözüm:</strong> Video recorder sunucusunda CORS headers ekleyin.
+                </div>`;
+                
+                showSolutions();
+            }
+        }
+
+        function showSolutions() {
+            const solutionsDiv = document.getElementById('solutions');
+            solutionsDiv.innerHTML = `
+                <h3>🔧 Nginx Konfigürasyonu (Video Recorder Sunucusu)</h3>
+                <pre>location /outputs {
+    alias /home/omer/recorder/public/outputs;
+    
+    # CORS headers
+    add_header Access-Control-Allow-Origin "*";
+    add_header Access-Control-Allow-Methods "GET, OPTIONS";
+    add_header Access-Control-Allow-Headers "Origin, Content-Type";
+    
+    # Dosya boyutu
+    client_max_body_size 500M;
+    
+    # MIME types
+    types {
+        video/mp4 mp4;
+        video/webm webm;
+    }
+}</pre>
+                
+                <h3>📝 Test Komutları</h3>
+                <pre># URL'yi curl ile test et:
+curl -I https://videocut.boencv.com/outputs/output_1759526107745.mp4_final_output.mp4
+
+# Dosyanın gerçek yolu:
+ls -lh /home/omer/recorder/public/outputs/output_1759526107745.mp4_final_output.mp4
+
+# Nginx restart:
+sudo systemctl restart nginx</pre>
+            `;
+        }
+
+        // Sayfa yüklendiğinde otomatik test
+        window.onload = () => {
+            testUrl();
+        };
+    </script>
+</body>
+</html>
+
+
